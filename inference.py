@@ -336,23 +336,14 @@ class ParticleFilter(InferenceModule):
         """
         allPossible = util.Counter()
         beliefs = self.getBeliefDistribution()
-        for ghostPosition in self.legalPositions:
-            newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, ghostPosition))
+        newParticles = []
+        for oldParticle in self.particles:
+            newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, oldParticle))
             for newPos, prob in newPosDist.items():
-                allPossible[newPos] += prob * beliefs[ghostPosition]
-        allPossible.normalize()
-        
-        allZero = True
-        for belief, prob in allPossible.items():
-            if ( prob != 0 ):
-                allZero = False
-                break
-        if allZero:
-            self.initializeUniformly(gameState)
-        else:
-            self.particles = []
-            while len(self.particles) < self.numParticles:
-                self.particles.append(util.sampleFromCounter(allPossible))
+                allPossible[newPos] += prob * beliefs[oldParticle]
+            newParticles.append(util.sampleFromCounter(allPossible))
+            allPossible = util.Counter()
+        self.particles = newParticles
 
     def getBeliefDistribution(self):
         """
